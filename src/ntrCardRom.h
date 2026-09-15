@@ -46,6 +46,7 @@ typedef enum
 #define NTR_CMD_ID_GAME_USB_WRITE_DATA      0xE9
 #define NTR_CMD_ID_GAME_USB_READ_DATA       0xEA
 #define NTR_CMD_ID_GAME_USB_GET_EVENT       0xEB
+#define NTR_CMD_ID_GAME_USB_GET_INPUT_STATE 0xEC
 
 struct ntr_rom_emu_t;
 

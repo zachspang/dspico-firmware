@@ -200,7 +200,7 @@ gGameNoScrambleCmd0HandlerTable:
     .word ntrc_gameWriteUsbDataCmd0 //E9
     .word ntrc_gameReadUsbDataCmd0 //EA
     .word ntrc_gameUsbGetEventCmd0 //EB
-    .word ntrc_gameNoScrambleCmd0Dummy //EC
+    .word ntrc_gameGetInputStateCmd0 //EC
     .word ntrc_gameNoScrambleCmd0Dummy //ED
     .word ntrc_gameNoScrambleCmd0Dummy //EE
     .word ntrc_gameNoScrambleCmd0Dummy //EF
@@ -315,7 +315,7 @@ gGameNoScrambleCmd1HandlerTable:
     .word ntrc_gameWriteUsbDataCmd1 //E9
     .word ntrc_gameReadUsbDataCmd1 //EA
     .word ntrc_gameUsbGetEventCmd1 //EB
-    .word ntrc_gameNoScrambleCmd1Unknown //EC
+    .word ntrc_gameGetInputStateCmd1 //EC
     .word ntrc_gameNoScrambleCmd1Unknown //ED
     .word ntrc_gameNoScrambleCmd1Unknown //EE
     .word ntrc_gameNoScrambleCmd1Unknown //EF

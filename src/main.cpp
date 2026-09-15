@@ -19,6 +19,8 @@
 #include "pico/bootrom.h"
 #include "hardware/xosc.h"
 #include "powerSaving.h"
+#include "usbInputOverride.h"
+#include "hardware/structs/usb.h"
 
 static u32 sProgramOffset;
 FATFS sFatFs;
@@ -356,6 +358,8 @@ int __time_critical_func(main)()
     sIsSdCardMounted = false;
     initSd();
 
+    usbInputOverride_init();
+    
     tryRebootToBootsel();
 
     pwr_initPowerSaving();
@@ -367,6 +371,7 @@ int __time_critical_func(main)()
     #ifdef ENABLE_R4_MODE
         ntrc_gameR4Update();
     #endif
+        usbInputOverride_task();
         __wfi();
     }
 }

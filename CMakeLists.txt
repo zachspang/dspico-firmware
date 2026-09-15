@@ -9,7 +9,7 @@ add_compile_definitions(DSpico
   PICO_STACK_SIZE=0x600
   PICO_CORE1_STACK_SIZE=0x400
   ENABLE_R4_MODE
-  #DSPICO_ENABLE_WRFUXXED # This macro enables the WRFUXXED exploit to work.
+  DSPICO_ENABLE_WRFUXXED # This macro enables the WRFUXXED exploit to work.
   # ENABLE_PREVENT_DSI_AUTOBOOT # meant to be used with WRFU, doesn't work properly on the 3ds
 )
 
@@ -40,6 +40,10 @@ add_executable(DSpico
   src/ntrCardRomGameUsb.h
   src/usbEventQueue.c
   src/usbEventQueue.h
+  src/usbInputOverride.cpp
+  src/usbInputOverride.h
+  src/usbInputOverrideDescriptors.cpp
+  src/usbInputOverrideDescriptors.h
   src/tinyusb/dcd_rp2040.c
   src/tinyusb/rp2040_usb.c
   src/tinyusb/rp2040_usb.h

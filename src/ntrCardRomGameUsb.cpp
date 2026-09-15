@@ -6,9 +6,11 @@
 #include "usbEventQueue.h"
 #include "powerSaving.h"
 #include "ntrCardRomGameUsb.h"
+#include "usbInputOverride.h"
 
 static u8 sUsbDataBuffers[32][1024] alignas(4);
 static bool sUsbActive;
+static u32 sInputStateSnapshot;
 
 extern "C" void __scratch_y("cpu0") ntrc_gameReqUsbCommandCmd1(ntr_rom_emu_t* romEmu, u32 word, pio_hw_t* pio)
 {
@@ -190,6 +192,19 @@ extern "C" void __scratch_y("cpu0") ntrc_gameUsbGetEventCmd1(ntr_rom_emu_t* romE
 {
     ntrc_beginWrite(pio, 4);
     ntrc_writeWord(pio, usb_dequeueEvent());
+    ntrc_finishGameNoScrambleCmd1(romEmu);
+}
+
+extern "C" void __scratch_y("cpu0") ntrc_gameGetInputStateCmd0(ntr_rom_emu_t* romEmu, u32 word, pio_hw_t* pio)
+{
+    sInputStateSnapshot = usbInputOverride_getState();
+    ntrc_finishGameNoScrambleCmd0(romEmu);
+}
+
+extern "C" void __scratch_y("cpu0") ntrc_gameGetInputStateCmd1(ntr_rom_emu_t* romEmu, u32 word, pio_hw_t* pio)
+{
+    ntrc_beginWrite(pio, 4);
+    ntrc_writeWord(pio, sInputStateSnapshot);
     ntrc_finishGameNoScrambleCmd1(romEmu);
 }
 
