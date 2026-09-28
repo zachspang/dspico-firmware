@@ -10,7 +10,6 @@
 
 static u8 sUsbDataBuffers[32][1024] alignas(4);
 static bool sUsbActive;
-static u32 sInputStateSnapshot;
 
 extern "C" void __scratch_y("cpu0") ntrc_gameReqUsbCommandCmd1(ntr_rom_emu_t* romEmu, u32 word, pio_hw_t* pio)
 {
@@ -197,14 +196,15 @@ extern "C" void __scratch_y("cpu0") ntrc_gameUsbGetEventCmd1(ntr_rom_emu_t* romE
 
 extern "C" void __scratch_y("cpu0") ntrc_gameGetInputStateCmd0(ntr_rom_emu_t* romEmu, u32 word, pio_hw_t* pio)
 {
-    sInputStateSnapshot = usbInputOverride_getState();
+    usbInputOverride_requestInit();
+    sUsbActive = usbInputOverride_isInitialized();
     ntrc_finishGameNoScrambleCmd0(romEmu);
 }
 
 extern "C" void __scratch_y("cpu0") ntrc_gameGetInputStateCmd1(ntr_rom_emu_t* romEmu, u32 word, pio_hw_t* pio)
 {
     ntrc_beginWrite(pio, 4);
-    ntrc_writeWord(pio, sInputStateSnapshot);
+    ntrc_writeWord(pio, usbInputOverride_getState());
     ntrc_finishGameNoScrambleCmd1(romEmu);
 }
 
@@ -214,6 +214,7 @@ extern "C" void ntrc_resetUsb(void)
     {
         dcd_disconnect(0);
         dcd_int_disable(0);
+        usbInputOverride_reset();
         usb_hw->main_ctrl = USB_MAIN_CTRL_CONTROLLER_EN_RESET;
         usb_hw->sie_ctrl = 0;
         usb_hw->inte = 0;

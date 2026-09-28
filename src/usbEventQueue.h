@@ -29,6 +29,9 @@ extern "C" {
 /// @brief Clears the USB event queue.
 void usb_clearEventQueue(void);
 
+/// @brief Enables or disables the cartridge IRQ for queued USB events.
+void usb_setCartridgeIrqEnabled(bool enabled);
+
 /// @brief Prepares for dequeueing a USB event.
 void usb_prepareDequeueEvent(void);
 

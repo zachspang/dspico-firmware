@@ -357,8 +357,6 @@ int __time_critical_func(main)()
     resetNtrCard();
     sIsSdCardMounted = false;
     initSd();
-
-    usbInputOverride_init();
     
     tryRebootToBootsel();
 

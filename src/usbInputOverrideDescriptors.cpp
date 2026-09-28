@@ -38,11 +38,11 @@ struct __attribute__((packed)) CdcUnionFunctionalDescriptor
 const tusb_desc_device_t gDeviceDescriptor = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
-    .bcdUSB             = 0x0200,
+    .bcdUSB             = 0x0110,
 
-    .bDeviceClass       = TUSB_CLASS_CDC,
-    .bDeviceSubClass    = 0x00,
-    .bDeviceProtocol    = 0x00,
+    .bDeviceClass       = TUSB_CLASS_MISC,
+    .bDeviceSubClass    = 0x02,
+    .bDeviceProtocol    = 0x01,
 
     .bMaxPacketSize0    = 64,
 
@@ -138,7 +138,7 @@ static const UsbConfigDescriptorBlob sConfigDescriptorBlob = {
     .dataOutEndpoint = {
         .bLength          = sizeof(tusb_desc_endpoint_t),
         .bDescriptorType  = TUSB_DESC_ENDPOINT,
-        .bEndpointAddress = 0x02, // EP2 OUT - controller-state packets land here
+        .bEndpointAddress = 0x02, // EP2 OUT
         .bmAttributes     = { .xfer = TUSB_XFER_BULK, .sync = 0, .usage = 0 },
         .wMaxPacketSize   = 64,
         .bInterval        = 0
@@ -147,7 +147,7 @@ static const UsbConfigDescriptorBlob sConfigDescriptorBlob = {
     .dataInEndpoint = {
         .bLength          = sizeof(tusb_desc_endpoint_t),
         .bDescriptorType  = TUSB_DESC_ENDPOINT,
-        .bEndpointAddress = 0x82, // EP2 IN — required by CDC spec, unused by this feature
+        .bEndpointAddress = 0x82, // EP2 IN
         .bmAttributes     = { .xfer = TUSB_XFER_BULK, .sync = 0, .usage = 0 },
         .wMaxPacketSize   = 64,
         .bInterval        = 0

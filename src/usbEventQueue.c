@@ -3,10 +3,16 @@
 #include "usbEventQueue.h"
 
 static usb_event_queue_t sUsbEventQueue;
+static volatile bool sCartridgeIrqEnabled = true;
 
 static void setCartridgeIrqState(bool asserted)
 {
-    gpio_put(PIN_IRQ, asserted);
+    gpio_put(PIN_IRQ, asserted && sCartridgeIrqEnabled);
+}
+
+void usb_setCartridgeIrqEnabled(bool enabled)
+{
+    sCartridgeIrqEnabled = enabled;
 }
 
 void usb_clearEventQueue(void)
