@@ -156,4 +156,6 @@ static const UsbConfigDescriptorBlob sConfigDescriptorBlob = {
 
 const u8* const gConfigDescriptor = reinterpret_cast<const u8*>(&sConfigDescriptorBlob);
 const u16 gConfigDescriptorLength = sizeof(sConfigDescriptorBlob);
+const tusb_desc_endpoint_t* const gNotificationEndpointDescriptor = &sConfigDescriptorBlob.notificationEndpoint;
 const tusb_desc_endpoint_t* const gDataOutEndpointDescriptor = &sConfigDescriptorBlob.dataOutEndpoint;
+const tusb_desc_endpoint_t* const gDataInEndpointDescriptor = &sConfigDescriptorBlob.dataInEndpoint;

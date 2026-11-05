@@ -1,6 +1,7 @@
 #include <string.h>
 #include "common.h"
 #include "hardware/timer.h"
+#include "hardware/structs/usb.h"
 #include "usbEventQueue.h"
 #include "tinyusb/dcd.h"
 #include "usbInputOverride.h"
@@ -35,7 +36,8 @@ void usbInputOverride_init(void)
     sInitialized = true;
 }
 
-void usbInputOverride_requestInit(void)
+// Called from the slot-1 command handlers, so these must not run from flash
+void __time_critical_func(usbInputOverride_requestInit)(void)
 {
     if (!sInitialized && !sInitRequested)
     {
@@ -44,7 +46,7 @@ void usbInputOverride_requestInit(void)
     }
 }
 
-bool usbInputOverride_isInitialized(void)
+bool __time_critical_func(usbInputOverride_isInitialized)(void)
 {
     return sInitialized;
 }
@@ -95,11 +97,21 @@ void usbInputOverride_task(void)
         if (event == USB_EVENT_BUS_RESET || event == USB_EVENT_UNPLUGGED)
         {
             resetControlTransferState();
+            sInputState = 0xFFFF;
+        }
+        else if (event == USB_EVENT_SUSPEND)
+        {
+            // Without VBUS detection an unplugged cable looks like a suspend
+            sInputState = 0xFFFF;
         }
         else if (event & USB_EVENT_SETUP_RECEIVED)
         {
             resetControlTransferState();
             u32 event1 = usb_dequeueEvent() & 0x7FFFFFFF;
+
+            // EP0 may still be armed for an earlier request the host gave up on
+            usb_dpram->ep_buf_ctrl[0].in &= ~USB_BUF_CTRL_AVAIL;
+            usb_dpram->ep_buf_ctrl[0].out &= ~USB_BUF_CTRL_AVAIL;
 
             sPendingRequest.wIndex = event & 0xFFFF;
             sPendingRequest.wLength = (event >> 16) & 0x1FFF;
@@ -159,8 +171,12 @@ void usbInputOverride_task(void)
                 }
                 case TUSB_REQ_SET_CONFIGURATION:
                 {
+                    dcd_edpt_close_all(0);
                     if (sPendingRequest.wValue != 0)
                     {
+                        // The IN endpoints are never armed, so they always NAK
+                        dcd_edpt_open(0, gNotificationEndpointDescriptor);
+                        dcd_edpt_open(0, gDataInEndpointDescriptor);
                         dcd_edpt_open(0, gDataOutEndpointDescriptor);
                         dcd_edpt_xfer(0, 0x80, nullptr, 0);
 
@@ -174,6 +190,11 @@ void usbInputOverride_task(void)
                 }
                 case CDC_REQUEST_SET_CONTROL_LINE_STATE:
                 {
+                    // DTR is cleared when the client closes the port
+                    if ((sPendingRequest.wValue & 1) == 0)
+                    {
+                        sInputState = 0xFFFF;
+                    }
                     dcd_edpt_xfer(0, 0x80, nullptr, 0);
                     break;
                 }
@@ -251,8 +272,14 @@ void usbInputOverride_task(void)
                 }
             }
             // data out
-            else if (epAddr == 0x02) 
+            else if (epAddr == 0x02)
             {
+                // A bus reset may have closed the endpoint after this transfer completed
+                if (!(usb_dpram->ep_ctrl[1].out & EP_CTRL_ENABLE_BITS))
+                {
+                    continue;
+                }
+
                 if (xferredLen >= 2)
                 {
                     sInputState = sReceiveBuffer[0] | (sReceiveBuffer[1] << 8);
@@ -264,7 +291,7 @@ void usbInputOverride_task(void)
     }
 }
 
-u32 usbInputOverride_getState(void)
+u32 __time_critical_func(usbInputOverride_getState)(void)
 {
     return sInputState;
 }
