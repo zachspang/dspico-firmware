@@ -1,6 +1,5 @@
 #include <string.h>
 #include "common.h"
-#include "hardware/timer.h"
 #include "hardware/structs/usb.h"
 #include "usbEventQueue.h"
 #include "tinyusb/dcd.h"
@@ -13,8 +12,6 @@ static constexpr u8 CDC_REQUEST_GET_LINE_CODING = 0x21;
 static constexpr u8 CDC_REQUEST_SET_CONTROL_LINE_STATE = 0x22;
 
 static volatile bool sInitialized = false;
-static volatile bool sInitRequested = false;
-static volatile u32 sInitRequestedAtUs;
 static tusb_control_request_t sPendingRequest;
 static bool sAwaitingStatusOut = false;
 static u8 sLineCodingRxBuffer[7];
@@ -37,15 +34,6 @@ void usbInputOverride_init(void)
 }
 
 // Called from the slot-1 command handlers, so these must not run from flash
-void __time_critical_func(usbInputOverride_requestInit)(void)
-{
-    if (!sInitialized && !sInitRequested)
-    {
-        sInitRequestedAtUs = time_us_32();
-        sInitRequested = true;
-    }
-}
-
 bool __time_critical_func(usbInputOverride_isInitialized)(void)
 {
     return sInitialized;
@@ -72,18 +60,11 @@ void usbInputOverride_reset(void)
         memset(sReceiveBuffer, 0, sizeof(sReceiveBuffer));
         sInputState = 0xFFFF;
         sInitialized = false;
-        sInitRequested = false;
     }
 }
 
 void usbInputOverride_task(void)
 {
-    // If the init runs too close the resetNtrCard() from booting a agmethe dspico will crash, this 3 second
-    // wait after the first time 0xEC is called should be plenty of time to avoid it.
-    if (!sInitialized && sInitRequested && time_us_32() - sInitRequestedAtUs >= 3000000u) {
-        usbInputOverride_init();
-    }
-
     while (sInitialized)
     {
         u32 raw = usb_dequeueEvent();

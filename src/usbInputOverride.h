@@ -2,7 +2,6 @@
 #include "common.h"
 
 void usbInputOverride_init(void);
-void usbInputOverride_requestInit(void);
 bool usbInputOverride_isInitialized(void);
 // Should only be called by ntrc_resetUsb as it only resets 
 // the state of things ntrc_resetUsb doesnt
