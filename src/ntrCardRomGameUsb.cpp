@@ -1,5 +1,6 @@
 #include "common.h"
 #include "hardware/structs/usb.h"
+#include "hardware/structs/nvic.h"
 #include "tinyusb/dcd.h"
 #include "ntrCardRom.h"
 #include "ntrCardRomGameNoScramble.h"
@@ -196,25 +197,27 @@ extern "C" void __scratch_y("cpu0") ntrc_gameUsbGetEventCmd1(ntr_rom_emu_t* romE
 
 extern "C" void __scratch_y("cpu0") ntrc_gameGetInputStateCmd0(ntr_rom_emu_t* romEmu, u32 word, pio_hw_t* pio)
 {
+    // Queued after the first command word like E4, the poll uses no latency gap
+    ntrc_beginWrite(pio, 4);
+    ntrc_writeWord(pio, usbInputOverride_getState());
     ntrc_finishGameNoScrambleCmd0(romEmu);
 }
 
 extern "C" void __scratch_y("cpu0") ntrc_gameGetInputStateCmd1(ntr_rom_emu_t* romEmu, u32 word, pio_hw_t* pio)
 {
-    ntrc_beginWrite(pio, 4);
-    ntrc_writeWord(pio, usbInputOverride_getState());
     ntrc_finishGameNoScrambleCmd1(romEmu);
 
+    // The init is too slow for this IRQ, it runs in a lower priority IRQ the card IRQ can preempt
     if (!usbInputOverride_isInitialized())
     {
-        usbInputOverride_init();
-        sUsbActive = true;
+        nvic_hw->ispr = 1u << USB_INPUT_OVERRIDE_INIT_IRQ;
     }
 }
 
 extern "C" void ntrc_resetUsb(void)
 {
-    if (sUsbActive)
+    nvic_hw->icpr = 1u << USB_INPUT_OVERRIDE_INIT_IRQ;
+    if (sUsbActive || usbInputOverride_isInitialized())
     {
         dcd_disconnect(0);
         dcd_int_disable(0);

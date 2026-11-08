@@ -26,6 +26,10 @@ static u16 sMultiPacketRemaining = 0;
 
 void usbInputOverride_init(void)
 {
+    if (sInitialized)
+    {
+        return;
+    }
     usb_setCartridgeIrqEnabled(false);
     pwr_disableUsbPowerSaving();
     dcd_init(0, nullptr);

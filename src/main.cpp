@@ -350,6 +350,9 @@ int __time_critical_func(main)()
     irq_set_priority(USBCTRL_IRQ, 0x80);
     irq_set_priority(DMA_IRQ_1, 0x80);
     irq_set_priority(TIMER_IRQ_0, 0x80);
+    irq_set_exclusive_handler(USB_INPUT_OVERRIDE_INIT_IRQ, usbInputOverride_init);
+    irq_set_priority(USB_INPUT_OVERRIDE_INIT_IRQ, 0xC0);
+    irq_set_enabled(USB_INPUT_OVERRIDE_INIT_IRQ, true);
 
     // printf("Starting\n");
     // printf("sProgramOffset %d\n", sProgramOffset);
