@@ -88,6 +88,7 @@ static void __time_critical_func(gpioIrq)(uint gpio, u32 events)
         {
             pio_sm_set_enabled(pio0, 0, false);
             pio_sm_set_pindirs_with_mask(pio0, 0, 0, PIN_INPUT_MASK);
+            ntrc_resetUsb();
         }
         if (events & GPIO_IRQ_EDGE_RISE)
         {

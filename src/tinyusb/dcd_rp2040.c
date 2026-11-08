@@ -396,7 +396,9 @@ bool dcd_init(uint8_t rhport, const tusb_rhport_init_t* rh_init) {
   usb_hw->pwr = USB_USB_PWR_VBUS_DETECT_BITS | USB_USB_PWR_VBUS_DETECT_OVERRIDE_EN_BITS;
 #endif
 
-  irq_add_shared_handler(USBCTRL_IRQ, dcd_rp2040_irq, PICO_SHARED_IRQ_HANDLER_HIGHEST_ORDER_PRIORITY);
+  // Only the first init adds the IRQ handler, it stays added for later inits
+  if (!irq_has_shared_handler(USBCTRL_IRQ))
+    irq_add_shared_handler(USBCTRL_IRQ, dcd_rp2040_irq, PICO_SHARED_IRQ_HANDLER_HIGHEST_ORDER_PRIORITY);
 
   // Init control endpoints
   tu_memclr(hw_endpoints[0], 2 * sizeof(hw_endpoint_t));
@@ -426,7 +428,6 @@ bool dcd_deinit(uint8_t rhport) {
   (void) rhport;
 
   reset_non_control_endpoints();
-  irq_remove_handler(USBCTRL_IRQ, dcd_rp2040_irq);
 
   // reset usb hardware into initial state
   reset_block(RESETS_RESET_USBCTRL_BITS);
