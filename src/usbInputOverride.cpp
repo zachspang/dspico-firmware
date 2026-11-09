@@ -10,6 +10,7 @@
 static constexpr u8 CDC_REQUEST_SET_LINE_CODING = 0x20;
 static constexpr u8 CDC_REQUEST_GET_LINE_CODING = 0x21;
 static constexpr u8 CDC_REQUEST_SET_CONTROL_LINE_STATE = 0x22;
+static constexpr u32 kInputStateIdle = 0;
 
 static volatile bool sInitialized = false;
 static tusb_control_request_t sPendingRequest;
@@ -18,7 +19,7 @@ static u8 sLineCodingRxBuffer[7];
 static u8 sLineCodingResponse[7];
 static bool sLineCodingDataPending = false;
 static u8 sReceiveBuffer[2];
-static u32 sInputState = 0xFFFF;
+static u32 sInputState = kInputStateIdle;
 
 static constexpr u16 kEp0MaxPacketSize = 64;
 static const u8* sMultiPacketPtr = nullptr;
@@ -62,7 +63,7 @@ void usbInputOverride_reset(void)
         memset(sLineCodingRxBuffer, 0, sizeof(sLineCodingRxBuffer));
         memset(sLineCodingResponse, 0, sizeof(sLineCodingResponse));
         memset(sReceiveBuffer, 0, sizeof(sReceiveBuffer));
-        sInputState = 0xFFFF;
+        sInputState = kInputStateIdle;
         sInitialized = false;
     }
 }
@@ -82,12 +83,12 @@ void usbInputOverride_task(void)
         if (event == USB_EVENT_BUS_RESET || event == USB_EVENT_UNPLUGGED)
         {
             resetControlTransferState();
-            sInputState = 0xFFFF;
+            sInputState = kInputStateIdle;
         }
         else if (event == USB_EVENT_SUSPEND)
         {
             // Without VBUS detection an unplugged cable looks like a suspend
-            sInputState = 0xFFFF;
+            sInputState = kInputStateIdle;
         }
         else if (event & USB_EVENT_SETUP_RECEIVED)
         {
@@ -178,7 +179,7 @@ void usbInputOverride_task(void)
                     // DTR is cleared when the client closes the port
                     if ((sPendingRequest.wValue & 1) == 0)
                     {
-                        sInputState = 0xFFFF;
+                        sInputState = kInputStateIdle;
                     }
                     dcd_edpt_xfer(0, 0x80, nullptr, 0);
                     break;
@@ -267,7 +268,8 @@ void usbInputOverride_task(void)
 
                 if (xferredLen >= 2)
                 {
-                    sInputState = sReceiveBuffer[0] | (sReceiveBuffer[1] << 8);
+                    u32 state = sReceiveBuffer[0] | (sReceiveBuffer[1] << 8);
+                    sInputState = (state & 0xFFF) == 0xFFF ? kInputStateIdle : state;
                 }
 
                 dcd_edpt_xfer(0, 0x02, sReceiveBuffer, sizeof(sReceiveBuffer)); // arm for next send
